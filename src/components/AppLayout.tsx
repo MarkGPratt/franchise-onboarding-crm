@@ -31,7 +31,7 @@ const Shell: React.FC = () => {
   const allowedPages: Record<string, string[]> = {
     admin: ['dashboard', 'leads', 'franchisees', 'documents', 'checklist-builder', 'email-templates', 'admin', 'notifications', 'notes-search', 'account-settings'],
     sales: ['dashboard', 'leads', 'franchisees', 'documents', 'notifications', 'notes-search', 'account-settings'],
-    franchisee: ['dashboard', 'my-onboarding', 'documents', 'notifications', 'account-settings'],
+    franchisee: ['dashboard', 'checklist-builder', 'documents', 'notifications', 'account-settings'],
   };
 
   const currentPage = allowedPages[user.role].includes(page) ? page : 'dashboard';
@@ -48,7 +48,13 @@ const Shell: React.FC = () => {
       case 'franchisees':
         return <FranchiseesPage initialFranchiseeId={pageData?.franchiseeId} initialNoteId={pageData?.noteId} />;
       case 'documents': return <DocumentsPage />;
-      case 'checklist-builder': return <ChecklistBuilder />;
+      case 'checklist-builder':
+        if (user.role === 'franchisee') {
+          return user.franchiseeId
+            ? <OnboardingFlow franchiseeId={user.franchiseeId} />
+            : <div className="p-8 text-gray-500">No onboarding record assigned to your account yet. Please contact your administrator.</div>;
+        }
+        return <ChecklistBuilder />;
       case 'email-templates': return <EmailTemplatesPage />;
       case 'admin': return <AdminPanel />;
       case 'notifications': return <NotificationPreferences />;
