@@ -132,7 +132,7 @@ interface DataContextType {
   franchisees: Franchisee[];
   addFranchisee: (f: Omit<Franchisee, 'id'>) => Franchisee;
   updateFranchisee: (id: string, f: Partial<Franchisee>) => void;
-  deleteFranchisee: (id: string) => void;
+  deleteFranchisee: (id: string) => Promise<{ ok: boolean; error?: string }>;
 
   leads: Lead[];
   addLead: (l: Omit<Lead, 'id' | 'createdAt' | 'interactions'>) => void;
@@ -721,17 +721,31 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (f.division !== undefined) patch.division = f.division || null;
     supabase.from('franchisees').update(patch).eq('id', id).then(({ error }) => { if (error) console.error(error.message); });
   };
-  const deleteFranchisee = (id: string) => {
+  const deleteFranchisee = async (id: string): Promise<{ ok: boolean; error?: string }> => {
     const target = franchisees.find(x => x.id === id);
+
+    // Clean up all related records first (no FK constraints so these won't block,
+    // but we remove them for data hygiene)
+    await supabase.from('task_uploads').delete().eq('franchisee_id', id);
+    await supabase.from('task_comments').delete().eq('franchisee_id', id);
+    await supabase.from('task_progress').delete().eq('franchisee_id', id);
+    await supabase.from('franchisee_notes').delete().eq('franchisee_id', id);
+
+    const { error } = await supabase.from('franchisees').delete().eq('id', id);
+    if (error) {
+      console.error('deleteFranchisee:', error.message);
+      return { ok: false, error: error.message };
+    }
+
     setFranchisees(prev => prev.filter(x => x.id !== id));
     setProgress(prev => { const n = { ...prev }; delete n[id]; return n; });
-    supabase.from('franchisees').delete().eq('id', id).then(({ error }) => { if (error) console.error(error.message); });
     logActivity({
       action: 'franchisee.deleted',
       targetType: 'franchisee',
       targetId: id,
       targetName: target?.name,
     });
+    return { ok: true };
   };
 
 

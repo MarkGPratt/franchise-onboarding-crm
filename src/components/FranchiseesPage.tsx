@@ -402,7 +402,7 @@ const FranchiseesPage: React.FC<FranchiseesPageProps> = ({ initialFranchiseeId, 
                     </div>
                   </div>
                   {!selectMode && (
-                    <button onClick={e => { e.stopPropagation(); if (confirm(`Delete ${f.name}? This removes all their onboarding data.`)) deleteFranchisee(f.id); }} className={`text-gray-300 hover:text-red-600 ${hasNotes ? 'mt-7' : ''}`}>
+                    <button onClick={async e => { e.stopPropagation(); if (confirm(`Delete ${f.name}? This removes all their onboarding data.`)) { const r = await deleteFranchisee(f.id); if (!r.ok) alert(`Could not delete franchisee.\n\n${r.error || 'Unknown error.'}`); } }} className={`text-gray-400 hover:text-red-600 ${hasNotes ? 'mt-7' : ''}`}>
                       <Trash2 className="h-4 w-4" />
                     </button>
                   )}
