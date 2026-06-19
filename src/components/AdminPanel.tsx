@@ -43,9 +43,12 @@ const AdminPanel: React.FC = () => {
       // password is intentionally only forwarded when the admin actually
       // typed something into the field — an empty string means "keep the
       // current password" (AuthContext.updateUser strips it on falsy).
+      // Only pass email if it actually changed — passing it unconditionally
+      // triggers an edge function call even for simple name/role edits.
+      const emailChanged = userForm.email.trim().toLowerCase() !== editingUser.email.trim().toLowerCase();
       const result = await updateUser(editingUser.id, {
         name: userForm.name,
-        email: userForm.email,
+        ...(emailChanged ? { email: userForm.email } : {}),
         password: userForm.password || undefined,
         role: userForm.role,
         franchiseeId: userForm.role === 'franchisee' ? (userForm.franchiseeId || undefined) : undefined,
