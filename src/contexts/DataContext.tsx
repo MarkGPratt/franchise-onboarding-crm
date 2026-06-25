@@ -153,8 +153,8 @@ interface DataContextType {
 
 
   progress: Record<string, FranchiseeProgress>;
-  toggleTask: (franchiseeId: string, taskId: string, by: string) => void;
-  addTaskComment: (franchiseeId: string, taskId: string, author: string, role: string, text: string) => void;
+  toggleTask: (franchiseeId: string, taskId: string, by: string) => Promise<void>;
+  addTaskComment: (franchiseeId: string, taskId: string, author: string, role: string, text: string) => Promise<void>;
   uploadTaskFile: (franchiseeId: string, taskId: string, file: File, uploadedBy: string) => Promise<void>;
   removeTaskUpload: (franchiseeId: string, taskId: string, uploadId: string, filePath: string) => Promise<void>;
 }
@@ -885,21 +885,34 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 
   // ----- Progress -----
-  const toggleTask = (franchiseeId: string, taskId: string, by: string) => {
-    let logged: { willComplete: boolean; taskText?: string; franchiseeName?: string } | null = null;
+  const toggleTask = async (franchiseeId: string, taskId: string, by: string): Promise<void> => {
+    let willComplete = false;
+    let completedAt: string | undefined;
+
     setProgress(prev => {
       const fp = prev[franchiseeId] || { franchiseeId, tasks: {} };
       const existing = fp.tasks[taskId];
-      const willComplete = !(existing?.completed);
+      willComplete = !(existing?.completed);
+      completedAt = willComplete ? new Date().toISOString() : undefined;
       const newTask: TaskState = {
         taskId, completed: willComplete,
-        completedAt: willComplete ? new Date().toISOString() : undefined,
+        completedAt,
         completedBy: willComplete ? by : undefined,
         comments: existing?.comments || [], uploads: existing?.uploads || [],
       };
-      logged = { willComplete };
       return { ...prev, [franchiseeId]: { ...fp, tasks: { ...fp.tasks, [taskId]: newTask } } };
     });
+
+    // Persist to database
+    await supabase.from('task_progress').upsert({
+      franchisee_id: franchiseeId,
+      task_id: taskId,
+      completed: willComplete,
+      completed_at: completedAt || null,
+      completed_by: willComplete ? by : null,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'franchisee_id,task_id' });
+
     // Resolve task text + franchisee name for a more useful log entry
     let taskText: string | undefined;
     for (const section of checklist) {
@@ -907,26 +920,38 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (t) { taskText = t.text; break; }
     }
     const franchiseeName = franchisees.find(f => f.id === franchiseeId)?.name;
-    if (logged) {
-      logActivity({
-        action: (logged as any).willComplete ? 'task.completed' : 'task.reopened',
-        targetType: 'task',
-        targetId: taskId,
-        targetName: taskText || taskId,
-        metadata: { franchiseeId, franchiseeName, by },
-      });
-    }
+    logActivity({
+      action: willComplete ? 'task.completed' : 'task.reopened',
+      targetType: 'task',
+      targetId: taskId,
+      targetName: taskText || taskId,
+      metadata: { franchiseeId, franchiseeName, by },
+    });
   };
 
-  const addTaskComment = (franchiseeId: string, taskId: string, author: string, role: string, text: string) => {
+  const addTaskComment = async (franchiseeId: string, taskId: string, author: string, role: string, text: string): Promise<void> => {
+    const id = `c_${Date.now()}`;
+    const date = new Date().toISOString();
+
     setProgress(prev => {
       const fp = prev[franchiseeId] || { franchiseeId, tasks: {} };
       const existing = fp.tasks[taskId] || { taskId, completed: false, comments: [], uploads: [] };
       const newTask: TaskState = {
         ...existing,
-        comments: [...existing.comments, { id: `c_${Date.now()}`, author, role, text, date: new Date().toISOString() }],
+        comments: [...existing.comments, { id, author, role, text, date }],
       };
       return { ...prev, [franchiseeId]: { ...fp, tasks: { ...fp.tasks, [taskId]: newTask } } };
+    });
+
+    // Persist to database
+    await supabase.from('task_comments').insert({
+      id,
+      franchisee_id: franchiseeId,
+      task_id: taskId,
+      author,
+      role,
+      text,
+      created_at: date,
     });
   };
   const uploadTaskFile = async (franchiseeId: string, taskId: string, file: File, uploadedBy: string) => {
