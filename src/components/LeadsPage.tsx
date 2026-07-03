@@ -172,13 +172,14 @@ const LeadsPage: React.FC = () => {
               <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Assigned To</th>
               <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Status</th>
               <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Notes</th>
+              <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Latest Comment</th>
               <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Created</th>
               <th className="px-6 py-3"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {filtered.length === 0 && (
-              <tr><td colSpan={8} className="text-center py-12 text-gray-500">No leads found.</td></tr>
+              <tr><td colSpan={9} className="text-center py-12 text-gray-500">No leads found.</td></tr>
             )}
             {filtered.map(l => (
               <tr key={l.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => setSelected(l)}>
@@ -204,6 +205,16 @@ const LeadsPage: React.FC = () => {
                   <span className={`px-2.5 py-1 rounded-full text-xs font-semibold capitalize ${STATUS_COLORS[l.status]}`}>{l.status}</span>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-700">{l.interactions.length}</td>
+                <td className="px-6 py-4 text-sm text-gray-600 max-w-xs">
+                  {(() => {
+                    const latest = l.interactions.length > 0
+                      ? l.interactions.reduce((a, b) => new Date(a.date) > new Date(b.date) ? a : b)
+                      : null;
+                    return latest
+                      ? <span title={latest.note} className="block truncate max-w-[220px]">{latest.note}</span>
+                      : <span className="text-gray-400">—</span>;
+                  })()}
+                </td>
                 <td className="px-6 py-4 text-sm text-gray-500">{new Date(l.createdAt).toLocaleDateString()}</td>
                 <td className="px-6 py-4 text-right">
                   <button onClick={e => { e.stopPropagation(); if (confirm('Delete this lead?')) deleteLead(l.id); }} className="text-gray-400 hover:text-red-600">
