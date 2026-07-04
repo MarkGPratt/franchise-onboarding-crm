@@ -7,14 +7,14 @@ export const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 // Whitelisted extensions
 export const ALLOWED_EXTENSIONS = [
   'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx',
-  'txt', 'csv', 'rtf',
+  'txt', 'csv', 'rtf', 'html', 'htm',
   'png', 'jpg', 'jpeg', 'gif', 'webp', 'heic', 'svg',
   'mp4', 'mov', 'avi', 'webm',
   'zip', 'rar', '7z',
 ];
 
 export const ACCEPT_ATTR =
-  '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,' +
+  '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.html,.htm,' +
   '.png,.jpg,.jpeg,.gif,.webp,.heic,.svg,' +
   '.mp4,.mov,.avi,.webm,' +
   '.zip,.rar,.7z';
