@@ -215,7 +215,10 @@ const LeadsPage: React.FC = () => {
                       : <span className="text-gray-400">—</span>;
                   })()}
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-500">{new Date(l.createdAt).toLocaleDateString()}</td>
+                <td className="px-6 py-4 text-sm text-gray-500">
+                  <div>{new Date(l.createdAt).toLocaleDateString()}</div>
+                  <div className="text-xs text-gray-400">{new Date(l.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                </td>
                 <td className="px-6 py-4 text-right">
                   <button onClick={e => { e.stopPropagation(); if (confirm('Delete this lead?')) deleteLead(l.id); }} className="text-gray-400 hover:text-red-600">
                     <Trash2 className="h-4 w-4" />
