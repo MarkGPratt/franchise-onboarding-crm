@@ -16,6 +16,11 @@ export interface Division {
   name: string;
 }
 
+export interface Area {
+  id: string;
+  name: string;
+}
+
 export interface Franchisee {
   id: string;
   name: string;
@@ -128,6 +133,10 @@ interface DataContextType {
   addDivision: (name: string) => Promise<Division | null>;
   updateDivision: (id: string, name: string) => void;
   deleteDivision: (id: string) => void;
+  areas: Area[];
+  addArea: (name: string) => Promise<Area | null>;
+  updateArea: (id: string, name: string) => void;
+  deleteArea: (id: string) => void;
 
   franchisees: Franchisee[];
   addFranchisee: (f: Omit<Franchisee, 'id'>) => Franchisee;
@@ -207,6 +216,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [franchisees, setFranchisees] = useState<Franchisee[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [divisions, setDivisions] = useState<Division[]>([]);
+  const [areas, setAreas] = useState<Area[]>([]);
   const [progress, setProgress] = useState<Record<string, FranchiseeProgress>>(() => load(K.progress, {}));
 
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
@@ -349,11 +359,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data, error } = await supabase.from('divisions').select('*').order('name');
     if (!error && data) setDivisions(data.map((d: any) => ({ id: d.id, name: d.name })));
   };
+  const refreshAreas = async () => {
+    const { data, error } = await supabase.from('areas').select('*').order('name');
+    if (!error && data) setAreas(data.map((a: any) => ({ id: a.id, name: a.name })));
+  };
 
   useEffect(() => {
     refreshLeads();
     refreshFranchisees();
     refreshDivisions();
+    refreshAreas();
     refreshChecklist();
 
     (async () => {
@@ -691,6 +706,24 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     supabase.from('divisions').delete().eq('id', id).then(({ error }) => { if (error) console.error(error.message); });
   };
 
+  // ----- Areas -----
+  const addArea = async (name: string): Promise<Area | null> => {
+    const id = `a_${Date.now()}`;
+    const { data, error } = await supabase.from('areas').insert({ id, name }).select().single();
+    if (error) { console.error('addArea:', error.message); return null; }
+    const a: Area = { id: data.id, name: data.name };
+    setAreas(prev => [...prev, a].sort((a, b) => a.name.localeCompare(b.name)));
+    return a;
+  };
+  const updateArea = (id: string, name: string) => {
+    setAreas(prev => prev.map(a => a.id === id ? { ...a, name } : a));
+    supabase.from('areas').update({ name }).eq('id', id).then(({ error }) => { if (error) console.error(error.message); });
+  };
+  const deleteArea = (id: string) => {
+    setAreas(prev => prev.filter(a => a.id !== id));
+    supabase.from('areas').delete().eq('id', id).then(({ error }) => { if (error) console.error(error.message); });
+  };
+
   // ----- Franchisees (DB) -----
   const addFranchisee = (f: Omit<Franchisee, 'id'>) => {
     const id = `f_${Date.now()}`;
@@ -992,6 +1025,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       addTaskAttachment, removeTaskAttachment,
       addSubtask, updateSubtask, deleteSubtask, moveSubtask,
       divisions, addDivision, updateDivision, deleteDivision,
+      areas, addArea, updateArea, deleteArea,
       franchisees, addFranchisee, updateFranchisee, deleteFranchisee,
       leads, addLead, updateLead, deleteLead, addInteraction, convertLeadToFranchisee,
       documents, documentsLoading, uploadDocument, removeDocument,

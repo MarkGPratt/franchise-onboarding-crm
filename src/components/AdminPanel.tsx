@@ -7,7 +7,7 @@ import ActivityLogPage from './ActivityLogPage';
 import LoginHistoryPage from './LoginHistoryPage';
 import {
   Plus, Trash2, Edit2, Save, X, Layers, Users as UsersIcon, ShieldCheck,
-  Settings, Activity, History,
+  Settings, Activity, History, MapPin,
 } from 'lucide-react';
 
 
@@ -16,7 +16,7 @@ type Tab = 'manage' | 'activity' | 'login-history';
 
 const AdminPanel: React.FC = () => {
   const { users, addUser, updateUser, deleteUser, user: currentUser } = useAuth();
-  const { divisions, addDivision, updateDivision, deleteDivision, franchisees } = useData();
+  const { divisions, addDivision, updateDivision, deleteDivision, areas, addArea, updateArea, deleteArea, franchisees } = useData();
 
   const [tab, setTab] = useState<Tab>('manage');
 
@@ -24,6 +24,11 @@ const AdminPanel: React.FC = () => {
   const [newDivision, setNewDivision] = useState('');
   const [editingDiv, setEditingDiv] = useState<string | null>(null);
   const [divName, setDivName] = useState('');
+
+  // Areas UI
+  const [newArea, setNewArea] = useState('');
+  const [editingArea, setEditingArea] = useState<string | null>(null);
+  const [areaName, setAreaName] = useState('');
 
   // Users UI
   const [showUserForm, setShowUserForm] = useState(false);
@@ -35,6 +40,12 @@ const AdminPanel: React.FC = () => {
     if (!newDivision.trim()) return;
     await addDivision(newDivision.trim());
     setNewDivision('');
+  };
+
+  const saveArea = async () => {
+    if (!newArea.trim()) return;
+    await addArea(newArea.trim());
+    setNewArea('');
   };
 
   const submitUser = async (e: React.FormEvent) => {
@@ -169,6 +180,51 @@ const AdminPanel: React.FC = () => {
                       <span className="text-xs text-gray-500">{franchisees.filter(f => f.division === d.name).length} franchisees</span>
                       <button onClick={() => { setEditingDiv(d.id); setDivName(d.name); }} className="text-gray-400 hover:text-[#C41E3A]"><Edit2 className="h-4 w-4" /></button>
                       <button onClick={() => { if (confirm(`Delete division "${d.name}"? Existing leads/franchisees keep the name but cannot be reassigned to it.`)) deleteDivision(d.id); }} className="text-gray-400 hover:text-red-600"><Trash2 className="h-4 w-4" /></button>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Areas */}
+          <section className="bg-white rounded-xl border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2"><MapPin className="h-5 w-5 text-[#C41E3A]" /> Areas</h2>
+                <p className="text-sm text-gray-500">Manage franchise territory areas. These appear as options in the Leads form. You can also type a custom area when adding a lead.</p>
+              </div>
+            </div>
+
+            <div className="flex gap-2 mb-4">
+              <input
+                value={newArea}
+                onChange={e => setNewArea(e.target.value)}
+                placeholder="New area (e.g. Sandton, Cape Town North)"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg outline-none focus:border-[#C41E3A]"
+                onKeyDown={e => e.key === 'Enter' && saveArea()}
+              />
+              <button onClick={saveArea} className="bg-[#C41E3A] hover:bg-[#a01830] text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-1">
+                <Plus className="h-4 w-4" /> Add
+              </button>
+            </div>
+
+            <div className="space-y-2 max-h-72 overflow-y-auto">
+              {areas.length === 0 && <p className="text-sm text-gray-500">No areas yet.</p>}
+              {areas.map(a => (
+                <div key={a.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                  {editingArea === a.id ? (
+                    <>
+                      <input value={areaName} onChange={e => setAreaName(e.target.value)} className="flex-1 px-3 py-1.5 border border-gray-300 rounded outline-none focus:border-[#C41E3A]" autoFocus />
+                      <button onClick={() => { if (areaName.trim()) updateArea(a.id, areaName.trim()); setEditingArea(null); }} className="text-green-600"><Save className="h-4 w-4" /></button>
+                      <button onClick={() => setEditingArea(null)} className="text-gray-400"><X className="h-4 w-4" /></button>
+                    </>
+                  ) : (
+                    <>
+                      <MapPin className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                      <span className="flex-1 font-semibold text-gray-800">{a.name}</span>
+                      <button onClick={() => { setEditingArea(a.id); setAreaName(a.name); }} className="text-gray-400 hover:text-[#C41E3A]"><Edit2 className="h-4 w-4" /></button>
+                      <button onClick={() => { if (confirm(`Delete area "${a.name}"?`)) deleteArea(a.id); }} className="text-gray-400 hover:text-red-600"><Trash2 className="h-4 w-4" /></button>
                     </>
                   )}
                 </div>

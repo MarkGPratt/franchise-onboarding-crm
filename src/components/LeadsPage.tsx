@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useData, Lead } from '@/contexts/DataContext';
+import { useData, Lead, Area } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { notify } from '@/lib/notify';
 import { Plus, X, MessageSquare, ArrowRight, Trash2, Mail, Phone, MapPin, User, Layers } from 'lucide-react';
@@ -13,7 +13,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const LeadsPage: React.FC = () => {
-  const { leads, addLead, updateLead, deleteLead, addInteraction, convertLeadToFranchisee, divisions } = useData();
+  const { leads, addLead, updateLead, deleteLead, addInteraction, convertLeadToFranchisee, divisions, areas } = useData();
   const { user, users, addUser } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [selected, setSelected] = useState<Lead | null>(null);
@@ -239,7 +239,12 @@ const LeadsPage: React.FC = () => {
               <Field label="Email"><input type="email" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="input" /></Field>
               <Field label="Phone"><input required value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} className="input" /></Field>
             </div>
-            <Field label="Area / Territory Interested In"><input required value={form.area} onChange={e => setForm({ ...form, area: e.target.value })} className="input" /></Field>
+            <Field label="Area / Territory Interested In">
+              <input required list="areas-list" value={form.area} onChange={e => setForm({ ...form, area: e.target.value })} className="input" placeholder="Select or type an area..." />
+              <datalist id="areas-list">
+                {areas.map(a => <option key={a.id} value={a.name} />)}
+              </datalist>
+            </Field>
             <Field label="Division">
               <select required value={form.division} onChange={e => setForm({ ...form, division: e.target.value })} className="input">
                 <option value="">— Select division —</option>
