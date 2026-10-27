@@ -34,6 +34,8 @@ export interface Franchisee {
 
 export type LeadStatus =
   | 'new'
+  | 'qualified'
+  | 'negotiating'
   | 'brand_education'
   | 'financial_qualification'
   | 'formal_application'
@@ -54,6 +56,14 @@ export interface Lead {
   createdAt: string;
   assignedTo: string;
   interactions: { id: string; date: string; note: string; author: string }[];
+  /** YYYY-MM-DD. Planned Franchise Agreement signature date. */
+  plannedSigningDate?: string;
+  /** YYYY-MM-DD. Planned launch (start trading) date. */
+  plannedLaunchDate?: string;
+  /** YYYY-MM-DD. Day 1 of the Lead Management Process (enquiry received). */
+  processStartDate?: string;
+  /** Ticked Lead Management Process steps, keyed by step id (see lib/leadProcess). */
+  processSteps?: Record<string, { at: string; by: string }>;
 }
 
 export interface StageDocument {
@@ -195,6 +205,10 @@ const mapLead = (r: any, interactions: any[] = []): Lead => ({
   lostReason: r.lost_reason || undefined,
   createdAt: r.created_at,
   assignedTo: r.assigned_to || '',
+  plannedSigningDate: r.planned_signing_date || undefined,
+  plannedLaunchDate: r.planned_launch_date || undefined,
+  processStartDate: r.process_start_date || undefined,
+  processSteps: r.process_steps || {},
   interactions: interactions
     .filter(i => i.lead_id === r.id)
     .map(i => ({ id: i.id, date: i.created_at, note: i.note, author: i.author || '' })),
@@ -792,7 +806,20 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       id, contact_name: l.contactName, email: l.email, phone: l.phone, area: l.area,
       division: l.division || null,
       status: l.status, assigned_to: l.assignedTo || null, created_at: createdAt,
-    }).then(({ error }) => { if (error) console.error('addLead:', error.message); });
+    }).then(({ error }) => {
+      if (error) { console.error('addLead:', error.message); return; }
+      // Process / planning fields are written separately so a lead is never
+      // lost if these columns have not been added to the database yet.
+      const extra: any = {};
+      if (l.processStartDate) extra.process_start_date = l.processStartDate;
+      if (l.processSteps) extra.process_steps = l.processSteps;
+      if (l.plannedSigningDate) extra.planned_signing_date = l.plannedSigningDate;
+      if (l.plannedLaunchDate) extra.planned_launch_date = l.plannedLaunchDate;
+      if (Object.keys(extra).length) {
+        supabase.from('leads').update(extra).eq('id', id)
+          .then(({ error: e2 }) => { if (e2) console.error('addLead (process fields):', e2.message); });
+      }
+    });
     logActivity({
       action: 'lead.created',
       targetType: 'lead',
@@ -812,6 +839,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (l.status !== undefined) patch.status = l.status;
     if (l.assignedTo !== undefined) patch.assigned_to = l.assignedTo || null;
     if (l.lostReason !== undefined) patch.lost_reason = l.lostReason || null;
+    if (l.plannedSigningDate !== undefined) patch.planned_signing_date = l.plannedSigningDate || null;
+    if (l.plannedLaunchDate !== undefined) patch.planned_launch_date = l.plannedLaunchDate || null;
+    if (l.processStartDate !== undefined) patch.process_start_date = l.processStartDate || null;
+    if (l.processSteps !== undefined) patch.process_steps = l.processSteps || {};
     supabase.from('leads').update(patch).eq('id', id).then(({ error }) => { if (error) console.error(error.message); });
   };
   const deleteLead = (id: string) => {
