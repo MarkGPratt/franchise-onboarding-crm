@@ -6,6 +6,7 @@ import { Plus, X, MessageSquare, ArrowRight, Trash2, Mail, Phone, MapPin, User, 
 import LeadProcessPanel from './LeadProcessPanel';
 import LeadTodoView from './LeadTodoView';
 import LeadPlannedReport from './LeadPlannedReport';
+import LeadApplicationPanel from './LeadApplicationPanel';
 import {
   todayYmd, fmtDate, nextOpenStep, stepDue, dueState, DUE_STYLES, isActiveStatus, PROCESS_STEPS,
 } from '@/lib/leadProcess';
@@ -441,6 +442,8 @@ const LeadsPage: React.FC = () => {
                 </button>
               </div>
             )}
+
+            <LeadApplicationPanel key={`app-${currentSelected.id}`} lead={currentSelected} />
 
             <LeadProcessPanel lead={currentSelected} />
 

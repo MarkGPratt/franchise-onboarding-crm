@@ -16,12 +16,16 @@ const TEMPLATE_VARS: Record<string, string[]> = {
   lead_assigned: ['recipient_name', 'lead_name', 'lead_email', 'lead_phone', 'lead_area', 'lead_status', 'app_url'],
   task_updated: ['recipient_name', 'actor_name', 'actor_role', 'action', 'task_text', 'detail', 'app_url'],
   franchisee_progress: ['recipient_name', 'franchisee_name', 'action', 'detail', 'app_url'],
+  application_invite: ['recipient_name', 'division', 'application_link', 'sender_name'],
+  application_submitted: ['recipient_name', 'applicant_name', 'division', 'app_url'],
 };
 
 const EVENT_DESCRIPTIONS: Record<string, string> = {
   lead_assigned: 'Sent to a sales rep when a new lead is allocated to them.',
   task_updated: 'Sent to a franchisee when the franchisor adds or comments on one of their tasks.',
   franchisee_progress: 'Sent to admins when a franchisee completes a task or uploads a document.',
+  application_invite: 'Sent to a prospect from the lead screen ("Send from CRM") with the link to the online application form.',
+  application_submitted: 'Sent to admins and the assigned sales rep when a prospect submits their application.',
 };
 
 const EmailTemplatesPage: React.FC = () => {
