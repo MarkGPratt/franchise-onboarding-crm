@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
-import { Users, UserPlus, FileText, CheckCircle2, TrendingUp, Clock, Briefcase } from 'lucide-react';
+import { Users, UserPlus, FileText, CheckCircle2, TrendingUp, Clock, Briefcase, Megaphone } from 'lucide-react';
 
 interface DashboardProps {
   onNavigate: (page: string) => void;
@@ -53,7 +53,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           <StatCard label="Documents" value={documents.length} icon={<FileText className="h-5 w-5" />} color="bg-purple-50 text-purple-700" />
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-3 gap-6">
           <button onClick={() => onNavigate('my-onboarding')} className="bg-white p-6 rounded-xl border border-gray-200 hover:shadow-lg hover:border-[#C41E3A] transition text-left">
             <Briefcase className="h-8 w-8 text-[#C41E3A] mb-3" />
             <h3 className="font-bold text-lg">Continue Onboarding</h3>
@@ -63,6 +63,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             <FileText className="h-8 w-8 text-[#C41E3A] mb-3" />
             <h3 className="font-bold text-lg">Document Vault</h3>
             <p className="text-gray-500 text-sm mt-1">Access franchise agreements, manuals & training materials.</p>
+          </button>
+          <button onClick={() => onNavigate('marketing')} className="bg-white p-6 rounded-xl border border-gray-200 hover:shadow-lg hover:border-[#C41E3A] transition text-left">
+            <Megaphone className="h-8 w-8 text-[#C41E3A] mb-3" />
+            <h3 className="font-bold text-lg">Marketing Programme</h3>
+            <p className="text-gray-500 text-sm mt-1">Plan your month, track prospects and log every marketing activity.</p>
           </button>
         </div>
       </div>

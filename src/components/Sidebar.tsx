@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { LayoutDashboard, Users, Briefcase, FileText, ListChecks, LogOut, UserPlus, Bell, Mail, ShieldCheck, Search, ChevronUp, Settings } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, FileText, ListChecks, LogOut, UserPlus, Bell, Mail, ShieldCheck, Search, ChevronUp, Settings, Megaphone } from 'lucide-react';
 
 
 
@@ -32,6 +32,7 @@ const Sidebar: React.FC<SidebarProps> = ({ current, onChange }) => {
     { id: 'leads', label: 'Leads Pipeline', icon: UserPlus, roles: ['admin', 'sales'] },
     { id: 'franchisees', label: 'Franchisees', icon: Users, roles: ['admin', 'sales'] },
     { id: 'checklist-builder', label: 'Process Flow', icon: ListChecks, roles: ['admin', 'franchisee'] },
+    { id: 'marketing', label: user.role === 'franchisee' ? 'Marketing Programme' : 'Marketing Performance', icon: Megaphone, roles: ['admin', 'sales', 'franchisee'] },
     { id: 'documents', label: 'Document Vault', icon: FileText, roles: ['admin', 'sales', 'franchisee'] },
     { id: 'notes-search', label: 'Notes Search', icon: Search, roles: ['admin', 'sales'] },
     { id: 'email-templates', label: 'Email Templates', icon: Mail, roles: ['admin'] },

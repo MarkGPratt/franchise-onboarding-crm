@@ -14,6 +14,8 @@ import EmailTemplatesPage from './EmailTemplatesPage';
 import AdminPanel from './AdminPanel';
 import NotesSearchPage from './NotesSearchPage';
 import AccountSettingsPage from './AccountSettingsPage';
+import MarketingProgramme from './MarketingProgramme';
+import MarketingPerformance from './MarketingPerformance';
 import { Menu, X } from 'lucide-react';
 
 export interface NavOptions { franchiseeId?: string; noteId?: string }
@@ -29,9 +31,9 @@ const Shell: React.FC = () => {
 
   // Restrict access based on role. account-settings is open to everyone.
   const allowedPages: Record<string, string[]> = {
-    admin: ['dashboard', 'leads', 'franchisees', 'documents', 'checklist-builder', 'email-templates', 'admin', 'notifications', 'notes-search', 'account-settings'],
-    sales: ['dashboard', 'leads', 'franchisees', 'documents', 'notifications', 'notes-search', 'account-settings'],
-    franchisee: ['dashboard', 'checklist-builder', 'documents', 'notifications', 'account-settings'],
+    admin: ['dashboard', 'leads', 'franchisees', 'marketing', 'documents', 'checklist-builder', 'email-templates', 'admin', 'notifications', 'notes-search', 'account-settings'],
+    sales: ['dashboard', 'leads', 'franchisees', 'marketing', 'documents', 'notifications', 'notes-search', 'account-settings'],
+    franchisee: ['dashboard', 'checklist-builder', 'marketing', 'documents', 'notifications', 'account-settings'],
   };
 
   const currentPage = allowedPages[user.role].includes(page) ? page : 'dashboard';
@@ -55,6 +57,13 @@ const Shell: React.FC = () => {
             : <div className="p-8 text-gray-500">No onboarding record assigned to your account yet. Please contact your administrator.</div>;
         }
         return <ChecklistBuilder />;
+      case 'marketing':
+        if (user.role === 'franchisee') {
+          return user.franchiseeId
+            ? <MarketingProgramme franchiseeId={user.franchiseeId} />
+            : <div className="p-8 text-gray-500">No franchise record assigned to your account yet. Please contact your administrator.</div>;
+        }
+        return <MarketingPerformance />;
       case 'email-templates': return <EmailTemplatesPage />;
       case 'admin': return <AdminPanel />;
       case 'notifications': return <NotificationPreferences />;
