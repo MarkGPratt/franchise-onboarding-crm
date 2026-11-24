@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ResetPassword from "./pages/ResetPassword";
 import Apply from "./pages/Apply";
+import Sign from "./pages/Sign";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/apply/:token" element={<Apply />} />
+            <Route path="/sign/:token" element={<Sign />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

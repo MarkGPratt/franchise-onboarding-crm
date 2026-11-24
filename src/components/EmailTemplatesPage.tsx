@@ -18,6 +18,11 @@ const TEMPLATE_VARS: Record<string, string[]> = {
   franchisee_progress: ['recipient_name', 'franchisee_name', 'action', 'detail', 'app_url'],
   application_invite: ['recipient_name', 'division', 'application_link', 'sender_name'],
   application_submitted: ['recipient_name', 'applicant_name', 'division', 'app_url'],
+  application_received: ['recipient_name', 'division', 'submitted_date'],
+  nda_invite: ['recipient_name', 'division', 'signing_link', 'sender_name'],
+  disclosure_invite: ['recipient_name', 'division', 'signing_link', 'sender_name'],
+  document_signed_copy: ['recipient_name', 'document_title', 'signed_date', 'document_link'],
+  document_signed_staff: ['recipient_name', 'applicant_name', 'document_title', 'division', 'signed_date', 'extra_note', 'app_url'],
 };
 
 const EVENT_DESCRIPTIONS: Record<string, string> = {
@@ -26,6 +31,11 @@ const EVENT_DESCRIPTIONS: Record<string, string> = {
   franchisee_progress: 'Sent to admins when a franchisee completes a task or uploads a document.',
   application_invite: 'Sent to a prospect from the lead screen ("Send from CRM") with the link to the online application form.',
   application_submitted: 'Sent to admins and the assigned sales rep when a prospect submits their application.',
+  application_received: 'Sent to the prospect as confirmation when they submit the online application form.',
+  nda_invite: 'Sent to a prospect from the lead screen ("Send from CRM") with the link to read and sign the NDA.',
+  disclosure_invite: 'Sent to a prospect from the lead screen ("Send from CRM") with the link to the disclosure document for their division.',
+  document_signed_copy: 'Sent to the prospect with a download link to their signed NDA or acknowledged disclosure document.',
+  document_signed_staff: 'Sent to admins and the assigned sales rep when a prospect signs the NDA or confirms receipt of the disclosure document.',
 };
 
 const EmailTemplatesPage: React.FC = () => {

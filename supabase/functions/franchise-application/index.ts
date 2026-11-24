@@ -4,7 +4,8 @@
 //   action 'submitted' : tell admins + the assigned sales rep that an
 //                        application came in (template: application_submitted).
 //                        Called from the public form; only fires once, and only
-//                        for an application that really is submitted.
+//                        for an application that really is submitted. Also
+//                        emails the applicant a confirmation (application_received).
 // Uses Resend. Secrets: RESEND_API_KEY, optional RESEND_FROM
 // (e.g. "The Surgeon Group <franchising@surgeongroup.co.za>").
 import { createClient } from "npm:@supabase/supabase-js@2.45.0";
@@ -115,7 +116,18 @@ Deno.serve(async (req) => {
           app_url: appUrl,
         }));
       }
-      return json({ ok: true, sent: results.filter(r => r.ok).length });
+      // Confirmation to the applicant
+      let confirmed = false;
+      if (app.applicant_email) {
+        const submitted = new Date(app.submitted_at || Date.now()).toLocaleDateString('en-ZA', { timeZone: 'Africa/Johannesburg', day: 'numeric', month: 'long', year: 'numeric' });
+        const c = await sendMail('application_received', app.applicant_email, {
+          recipient_name: String(app.applicant_name || 'there').split(' ')[0],
+          division: app.division || 'Surgeon Group',
+          submitted_date: submitted,
+        });
+        confirmed = !!c.ok;
+      }
+      return json({ ok: true, sent: results.filter(r => r.ok).length, applicant_confirmed: confirmed });
     }
 
     return json({ ok: false, error: 'unknown action' }, 400);

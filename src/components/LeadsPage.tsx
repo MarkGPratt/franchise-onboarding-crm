@@ -7,6 +7,8 @@ import LeadProcessPanel from './LeadProcessPanel';
 import LeadTodoView from './LeadTodoView';
 import LeadPlannedReport from './LeadPlannedReport';
 import LeadApplicationPanel from './LeadApplicationPanel';
+import LeadSigningPanel from './LeadSigningPanel';
+import { copySignedDocsToFranchisee } from '@/lib/signing';
 import {
   todayYmd, fmtDate, nextOpenStep, stepDue, dueState, DUE_STYLES, isActiveStatus, PROCESS_STEPS,
 } from '@/lib/leadProcess';
@@ -135,6 +137,7 @@ const LeadsPage: React.FC = () => {
     if (!confirm(`Convert ${l.contactName} to a franchisee?\n\nThis will:\n• Move them to the Franchisees section\n• Create a login (email: ${l.email}, password: ${tempPassword})\n• Start their onboarding flow`)) return;
     const existingUser = users.find(u => u.email.toLowerCase() === l.email.toLowerCase());
     const newF = convertLeadToFranchisee(l.id);
+    if (newF) copySignedDocsToFranchisee(l.id, newF.id, user?.name || 'System').catch(e => console.warn('copy signed docs:', e));
     if (newF && !existingUser) {
       addUser({
         email: l.email,
@@ -444,6 +447,8 @@ const LeadsPage: React.FC = () => {
             )}
 
             <LeadApplicationPanel key={`app-${currentSelected.id}`} lead={currentSelected} />
+
+            <LeadSigningPanel key={`sign-${currentSelected.id}`} lead={currentSelected} />
 
             <LeadProcessPanel lead={currentSelected} />
 
