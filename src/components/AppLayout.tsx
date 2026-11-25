@@ -16,6 +16,10 @@ import NotesSearchPage from './NotesSearchPage';
 import AccountSettingsPage from './AccountSettingsPage';
 import MarketingProgramme from './MarketingProgramme';
 import MarketingPerformance from './MarketingPerformance';
+import LaunchPlanPage from './LaunchPlanPage';
+import DeclarationsPage from './DeclarationsPage';
+import PerformancePage from './PerformancePage';
+import OrdersPage from './OrdersPage';
 import { Menu, X } from 'lucide-react';
 
 export interface NavOptions { franchiseeId?: string; noteId?: string }
@@ -31,9 +35,9 @@ const Shell: React.FC = () => {
 
   // Restrict access based on role. account-settings is open to everyone.
   const allowedPages: Record<string, string[]> = {
-    admin: ['dashboard', 'leads', 'franchisees', 'marketing', 'documents', 'checklist-builder', 'email-templates', 'admin', 'notifications', 'notes-search', 'account-settings'],
-    sales: ['dashboard', 'leads', 'franchisees', 'marketing', 'documents', 'notifications', 'notes-search', 'account-settings'],
-    franchisee: ['dashboard', 'checklist-builder', 'marketing', 'documents', 'notifications', 'account-settings'],
+    admin: ['dashboard', 'leads', 'franchisees', 'marketing', 'declarations', 'performance', 'orders', 'launch-plan', 'documents', 'checklist-builder', 'email-templates', 'admin', 'notifications', 'notes-search', 'account-settings'],
+    sales: ['dashboard', 'leads', 'franchisees', 'marketing', 'declarations', 'performance', 'orders', 'launch-plan', 'documents', 'notifications', 'notes-search', 'account-settings'],
+    franchisee: ['dashboard', 'launch-plan', 'checklist-builder', 'declarations', 'performance', 'orders', 'marketing', 'documents', 'notifications', 'account-settings'],
   };
 
   const currentPage = allowedPages[user.role].includes(page) ? page : 'dashboard';
@@ -64,6 +68,10 @@ const Shell: React.FC = () => {
             : <div className="p-8 text-gray-500">No franchise record assigned to your account yet. Please contact your administrator.</div>;
         }
         return <MarketingPerformance />;
+      case 'launch-plan': return <LaunchPlanPage />;
+      case 'declarations': return <DeclarationsPage />;
+      case 'performance': return <PerformancePage />;
+      case 'orders': return <OrdersPage />;
       case 'email-templates': return <EmailTemplatesPage />;
       case 'admin': return <AdminPanel />;
       case 'notifications': return <NotificationPreferences />;

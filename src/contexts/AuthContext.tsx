@@ -94,7 +94,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!data) {
       // Self-heal: if the auth user has no matching profile row (e.g. created
       // before the auto-trigger existed, or row was deleted), create one now
-      // so the user can sign in. Defaults to the lowest-privilege role.
+      // so the user can sign in. Defaults to the lowest-privilege role (franchisee,
+      // with no franchise linked); an admin must set the real role.
       const { data: authData } = await supabase.auth.getUser();
       const email = authData?.user?.email || '';
       const fallbackName =
@@ -102,7 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         (email ? email.split('@')[0] : 'User');
       const { data: inserted, error: insertErr } = await supabase
         .from('profiles')
-        .insert({ id: authUserId, email, name: fallbackName, role: 'sales' })
+        .insert({ id: authUserId, email, name: fallbackName, role: 'franchisee' })
         .select('*')
         .maybeSingle();
       if (insertErr || !inserted) {

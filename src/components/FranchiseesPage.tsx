@@ -27,7 +27,8 @@ interface NoteCounts {
 
 const FranchiseesPage: React.FC<FranchiseesPageProps> = ({ initialFranchiseeId, initialNoteId }) => {
   const { franchisees, addFranchisee, deleteFranchisee, progress, checklist, divisions } = useData();
-  const { addUser, user } = useAuth();
+  const { addUser, user, users } = useAuth();
+  const [loginBusy, setLoginBusy] = useState(false);
   const [selected, setSelected] = useState<Franchisee | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -209,6 +210,26 @@ const FranchiseesPage: React.FC<FranchiseesPageProps> = ({ initialFranchiseeId, 
             </div>
           </div>
         </div>
+
+        <PortalLoginStrip
+          franchisee={selected}
+          logins={users.filter(u => u.franchiseeId === selected.id)}
+          canCreate={user?.role === 'admin'}
+          busy={loginBusy}
+          onCreate={async () => {
+            const existing = users.find(u => u.email.toLowerCase() === (selected.email || '').toLowerCase());
+            if (existing) { alert(`${selected.email} already has a login (${existing.role}). Link it under Administration instead.`); return; }
+            if (!selected.email) { alert('Add an email address for this franchisee first.'); return; }
+            if (!confirm(`Create a portal login for ${selected.name}?\n\nA temporary password will be emailed to ${selected.email}. They can change it under Account Settings.`)) return;
+            const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+            const tmp = 'Sg-' + Array.from(crypto.getRandomValues(new Uint32Array(9))).map(n => chars[n % chars.length]).join('');
+            setLoginBusy(true);
+            const res = await addUser({ email: selected.email, password: tmp, name: selected.name, role: 'franchisee', franchiseeId: selected.id } as any);
+            setLoginBusy(false);
+            if (res.error) alert('Could not create the login: ' + res.error);
+            else alert(`Login created and the welcome email sent to ${selected.email}.\n\nTemporary password (in case the email doesn't arrive): ${tmp}`);
+          }}
+        />
 
         <div>
           <h2 className="text-lg font-bold text-gray-900 mb-3">What would you like to view?</h2>
@@ -465,3 +486,22 @@ const FranchiseesPage: React.FC<FranchiseesPageProps> = ({ initialFranchiseeId, 
 };
 
 export default FranchiseesPage;
+
+/** Shows whether this franchisee can sign in to the portal, with a one-click "create login". */
+const PortalLoginStrip: React.FC<{
+  franchisee: Franchisee; logins: { id: string; email: string; name: string }[]; canCreate: boolean; busy: boolean; onCreate: () => void;
+}> = ({ franchisee, logins, canCreate, busy, onCreate }) => (
+  <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-wrap items-center justify-between gap-3">
+    <div className="text-sm">
+      <div className="font-semibold text-gray-900">Portal login</div>
+      {logins.length
+        ? <div className="text-gray-600">{logins.map(l => `${l.name} (${l.email})`).join(', ')} can sign in and see this franchise's Process Flow, documents, declarations, performance and orders.</div>
+        : <div className="text-gray-600">{franchisee.name} can't sign in to the portal yet.</div>}
+    </div>
+    {!logins.length && canCreate && (
+      <button onClick={onCreate} disabled={busy} className="bg-[#C41E3A] hover:bg-[#a01830] text-white px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50">
+        {busy ? 'Creating…' : 'Create login & email details'}
+      </button>
+    )}
+  </div>
+);
