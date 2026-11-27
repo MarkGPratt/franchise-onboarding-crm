@@ -4,15 +4,16 @@ import { useData, Franchisee } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Plus, Trash2, ArrowLeft, Mail, Phone, MapPin, Calendar, ListChecks,
-  FolderOpen, StickyNote, Pin, CheckSquare, Square, FileDown, X,
+  FolderOpen, StickyNote, Pin, CheckSquare, Square, FileDown, X, PhoneCall,
 } from 'lucide-react';
 import { Modal, Field } from './LeadsPage';
 import OnboardingFlow from './OnboardingFlow';
 import DocumentsPage from './DocumentsPage';
 import FranchiseeNotesPanel from './FranchiseeNotesPanel';
+import { ContactTimeline } from './ContactLog';
 import BulkExportModal from './BulkExportModal';
 
-type ViewMode = 'process' | 'documents' | 'notes';
+type ViewMode = 'process' | 'documents' | 'notes' | 'contacts';
 
 interface FranchiseesPageProps {
   /** When provided (e.g. from Notes Search deep link), auto-open this franchisee's notes panel. */
@@ -179,6 +180,20 @@ const FranchiseesPage: React.FC<FranchiseesPageProps> = ({ initialFranchiseeId, 
     );
   }
 
+  if (selected && viewMode === 'contacts' && isStaff) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <button onClick={backToChooser} className="flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-[#C41E3A]">
+            <ArrowLeft className="h-4 w-4" /> Back to options
+          </button>
+          <span className="text-sm text-gray-500">Contact log for <span className="font-semibold text-gray-900">{selected.name}</span></span>
+        </div>
+        <ContactTimeline franchiseeId={selected.id} />
+      </div>
+    );
+  }
+
   // Chooser screen — admin/sales picked a franchisee, now picks what to view
   if (selected && isStaff && !viewMode) {
     const pct = getProgress(selected.id);
@@ -233,7 +248,7 @@ const FranchiseesPage: React.FC<FranchiseesPageProps> = ({ initialFranchiseeId, 
 
         <div>
           <h2 className="text-lg font-bold text-gray-900 mb-3">What would you like to view?</h2>
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             <button
               onClick={() => setViewMode('process')}
               className="text-left bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg hover:border-[#C41E3A] transition"
@@ -286,6 +301,18 @@ const FranchiseesPage: React.FC<FranchiseesPageProps> = ({ initialFranchiseeId, 
               <div className="font-bold text-gray-900 text-lg">Internal Notes</div>
               <div className="text-sm text-gray-500 mt-1">Private notes visible only to admin and sales staff. Capture observations, follow-ups and context about this franchisee.</div>
               <div className="mt-4 text-sm font-semibold text-amber-600">Open notes →</div>
+            </button>
+
+            <button
+              onClick={() => setViewMode('contacts')}
+              className="text-left bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg hover:border-green-600 transition"
+            >
+              <div className="h-12 w-12 rounded-lg bg-green-50 text-green-700 flex items-center justify-center mb-4">
+                <PhoneCall className="h-6 w-6" />
+              </div>
+              <div className="font-bold text-gray-900 text-lg">Contact Log</div>
+              <div className="text-sm text-gray-500 mt-1">Every Head Office call and meeting with this franchisee, with action points. Log a call here.</div>
+              <div className="mt-4 text-sm font-semibold text-green-700">Open contact log →</div>
             </button>
           </div>
         </div>

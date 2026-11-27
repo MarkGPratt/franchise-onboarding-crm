@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { LayoutDashboard, Users, Briefcase, FileText, ListChecks, LogOut, UserPlus, Bell, Mail, ShieldCheck, Search, ChevronUp, Settings, Megaphone, Rocket, Receipt, BarChart3, ShoppingCart } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, FileText, ListChecks, LogOut, UserPlus, Bell, Mail, ShieldCheck, Search, ChevronUp, Settings, Megaphone, Rocket, Receipt, BarChart3, ShoppingCart, PhoneCall, ClipboardCheck, GraduationCap } from 'lucide-react';
 
 
 
@@ -32,6 +32,9 @@ const Sidebar: React.FC<SidebarProps> = ({ current, onChange }) => {
     { id: 'leads', label: 'Leads Pipeline', icon: UserPlus, roles: ['admin', 'sales'] },
     { id: 'franchisees', label: 'Franchisees', icon: Users, roles: ['admin', 'sales'] },
     { id: 'checklist-builder', label: 'Process Flow', icon: ListChecks, roles: ['admin', 'franchisee'] },
+    { id: 'obligations', label: 'HO Obligations', icon: ClipboardCheck, roles: ['admin', 'sales'] },
+    { id: 'knowledge-checks', label: 'Knowledge Checks', icon: GraduationCap, roles: ['admin', 'sales'] },
+    { id: 'contact-log', label: 'Contact Log', icon: PhoneCall, roles: ['admin', 'sales'] },
     { id: 'launch-plan', label: user.role === 'franchisee' ? 'My Launch Plan' : 'Launch Plan', icon: Rocket, roles: ['admin', 'sales', 'franchisee'] },
     { id: 'declarations', label: user.role === 'franchisee' ? 'Declare Turnover' : 'Declarations', icon: Receipt, roles: ['admin', 'sales', 'franchisee'] },
     { id: 'performance', label: user.role === 'franchisee' ? 'My Performance' : 'Performance', icon: BarChart3, roles: ['admin', 'sales', 'franchisee'] },

@@ -3,7 +3,7 @@ import { Loader2, AlertCircle, Save, FileText } from 'lucide-react';
 import { Modal, Field } from './LeadsPage';
 import { useData, DocumentItem } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { getExtension } from '@/lib/uploads';
+import { getExtension, resolveFileUrl } from '@/lib/uploads';
 
 // Extensions whose contents we can safely fetch as text, show in a textarea,
 // and re-upload as an edited Blob without corrupting the file.
@@ -35,7 +35,7 @@ const EditDocumentModal: React.FC<Props> = ({ document, onClose }) => {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(document.url);
+        const res = await fetch(await resolveFileUrl(document.url));
         if (!res.ok) throw new Error(`Failed to load document (HTTP ${res.status})`);
         const text = await res.text();
         setContent(text);

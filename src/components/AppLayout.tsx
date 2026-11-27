@@ -20,6 +20,9 @@ import LaunchPlanPage from './LaunchPlanPage';
 import DeclarationsPage from './DeclarationsPage';
 import PerformancePage from './PerformancePage';
 import OrdersPage from './OrdersPage';
+import ContactLogPage from './ContactLog';
+import ObligationsPage from './ObligationsPage';
+import KnowledgeChecks from './KnowledgeChecks';
 import { Menu, X } from 'lucide-react';
 
 export interface NavOptions { franchiseeId?: string; noteId?: string }
@@ -35,8 +38,8 @@ const Shell: React.FC = () => {
 
   // Restrict access based on role. account-settings is open to everyone.
   const allowedPages: Record<string, string[]> = {
-    admin: ['dashboard', 'leads', 'franchisees', 'marketing', 'declarations', 'performance', 'orders', 'launch-plan', 'documents', 'checklist-builder', 'email-templates', 'admin', 'notifications', 'notes-search', 'account-settings'],
-    sales: ['dashboard', 'leads', 'franchisees', 'marketing', 'declarations', 'performance', 'orders', 'launch-plan', 'documents', 'notifications', 'notes-search', 'account-settings'],
+    admin: ['dashboard', 'leads', 'franchisees', 'obligations', 'knowledge-checks', 'contact-log', 'marketing', 'declarations', 'performance', 'orders', 'launch-plan', 'documents', 'checklist-builder', 'email-templates', 'admin', 'notifications', 'notes-search', 'account-settings'],
+    sales: ['dashboard', 'leads', 'franchisees', 'obligations', 'knowledge-checks', 'contact-log', 'marketing', 'declarations', 'performance', 'orders', 'launch-plan', 'documents', 'notifications', 'notes-search', 'account-settings'],
     franchisee: ['dashboard', 'launch-plan', 'checklist-builder', 'declarations', 'performance', 'orders', 'marketing', 'documents', 'notifications', 'account-settings'],
   };
 
@@ -72,6 +75,9 @@ const Shell: React.FC = () => {
       case 'declarations': return <DeclarationsPage />;
       case 'performance': return <PerformancePage />;
       case 'orders': return <OrdersPage />;
+      case 'contact-log': return <ContactLogPage />;
+      case 'obligations': return <ObligationsPage />;
+      case 'knowledge-checks': return <KnowledgeChecks />;
       case 'email-templates': return <EmailTemplatesPage />;
       case 'admin': return <AdminPanel />;
       case 'notifications': return <NotificationPreferences />;

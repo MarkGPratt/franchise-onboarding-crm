@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { notify } from '@/lib/notify';
-import { ChevronDown, ChevronRight, MessageSquare, Upload, Check, Paperclip, User, Download, Trash2, Loader2, AlertCircle } from 'lucide-react';
+import { ChevronDown, ChevronRight, MessageSquare, Upload, Check, Paperclip, User, Download, Trash2, Loader2, AlertCircle, Lock } from 'lucide-react';
+import { lockReason, phaseLock } from '@/lib/processLock';
 import { ACCEPT_ATTR, MAX_FILE_SIZE_MB, downloadFile, validateFile } from '@/lib/uploads';
 
 interface Props {
@@ -85,8 +86,13 @@ const OnboardingFlow: React.FC<Props> = ({ franchiseeId }) => {
   const totalTasks = checklist.reduce((sum, s) => sum + s.tasks.length, 0);
   const overallPct = totalTasks ? Math.round((totalDone / totalTasks) * 100) : 0;
 
+  const isDone = (id: string) => !!getTaskState(id)?.completed;
+  const lockOf = (id: string) => (isDone(id) ? null : lockReason(checklist, isDone, id));
+
   const handleToggle = (taskId: string) => {
     const wasCompleted = getTaskState(taskId)?.completed || false;
+    const locked = wasCompleted ? null : lockOf(taskId);
+    if (locked) { alert(locked); return; }
     toggleTask(franchiseeId, taskId, user.name);
     const taskText = findTaskText(taskId);
     if (!wasCompleted) {
@@ -177,7 +183,8 @@ const OnboardingFlow: React.FC<Props> = ({ franchiseeId }) => {
               >
                 {isOpen ? <ChevronDown className="h-5 w-5 text-gray-400 flex-shrink-0" /> : <ChevronRight className="h-5 w-5 text-gray-400 flex-shrink-0" />}
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-gray-900">{section.title}</h3>
+                  <h3 className="font-bold text-gray-900 flex items-center gap-2">{phaseLock(checklist, isDone, section.id) && <Lock className="h-4 w-4 text-gray-400" />}{section.title}</h3>
+                  {phaseLock(checklist, isDone, section.id) && <div className="text-xs text-gray-500 mt-0.5">{phaseLock(checklist, isDone, section.id)}</div>}
                   <div className="mt-2 flex items-center gap-3">
                     <div className="flex-1 max-w-xs h-1.5 bg-gray-100 rounded-full overflow-hidden">
                       <div className="h-full bg-[#C41E3A]" style={{ width: `${pct}%` }} />
@@ -205,10 +212,12 @@ const OnboardingFlow: React.FC<Props> = ({ franchiseeId }) => {
                         <div className="flex items-start gap-3">
                           <button
                             onClick={() => handleToggle(task.id)}
+                            title={lockOf(task.id) || undefined}
                             className={`mt-0.5 h-5 w-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition ${
-                              ts?.completed ? 'bg-[#C41E3A] border-[#C41E3A]' : 'border-gray-300 hover:border-[#C41E3A]'
+                              ts?.completed ? 'bg-[#C41E3A] border-[#C41E3A]' : lockOf(task.id) ? 'border-gray-200 bg-gray-100 cursor-not-allowed' : 'border-gray-300 hover:border-[#C41E3A]'
                             }`}
                           >
+                            {!ts?.completed && lockOf(task.id) && <Lock className="h-3 w-3 text-gray-400" />}
                             {ts?.completed && <Check className="h-3.5 w-3.5 text-white" />}
                           </button>
                           <div className="flex-1 min-w-0">

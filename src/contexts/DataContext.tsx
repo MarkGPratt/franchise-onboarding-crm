@@ -967,8 +967,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { ...prev, [franchiseeId]: { ...fp, tasks: { ...fp.tasks, [taskId]: newTask } } };
     });
 
-    // Persist to database
-    await supabase.from('task_progress').upsert({
+    // Persist to database (the database refuses a tick that the Process Flow lock does not allow)
+    const { error: saveError } = await supabase.from('task_progress').upsert({
       franchisee_id: franchiseeId,
       task_id: taskId,
       completed: willComplete,
@@ -976,6 +976,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       completed_by: willComplete ? by : null,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'franchisee_id,task_id' });
+    if (saveError) {
+      setProgress(prev => {
+        const fp = prev[franchiseeId] || { franchiseeId, tasks: {} };
+        const existing = fp.tasks[taskId];
+        if (!existing) return prev;
+        return { ...prev, [franchiseeId]: { ...fp, tasks: { ...fp.tasks, [taskId]: { ...existing, completed: !willComplete, completedAt: undefined, completedBy: undefined } } } };
+      });
+      alert(saveError.message.replace(/^.*?Locked/, 'Locked'));
+      return;
+    }
 
     // Resolve task text + franchisee name for a more useful log entry
     let taskText: string | undefined;

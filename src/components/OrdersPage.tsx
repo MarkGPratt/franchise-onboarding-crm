@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
-import { CatalogueItem, Order, ORDER_STATUS, rands, missingTable, notifyStaff } from '@/lib/franchiseePortal';
+import { CatalogueItem, Order, ORDER_STATUS, rands, missingTable, notifyOrder } from '@/lib/franchiseePortal';
 import { Spinner, Modal } from './DeclarationsPage';
 import { ShoppingCart, Plus, Minus, Loader2, Trash2, Package } from 'lucide-react';
 
@@ -79,9 +79,11 @@ const FranchiseeOrders: React.FC<{ franchiseeId: string }> = ({ franchiseeId }) 
     if (error) { setErr(error.message); return; }
     const o = data as Order;
     const fname = franchisees.find(f => f.id === franchiseeId)?.name || user?.name || '';
-    notifyStaff('order_submitted', {
-      franchisee_name: fname, order_no: String(o.order_no), total: rands(o.total_excl, true), notes: o.notes || '—',
-      items: o.items.map(l => `${l.qty} × ${l.name}${l.size ? ` (${l.size})` : ''}`).join('\n'),
+    const vat = Math.round(Number(o.total_excl) * 15) / 100;
+    notifyOrder({
+      franchisee_name: fname, order_no: String(o.order_no), ordered_by: user?.name || '—', notes: o.notes || '—',
+      total: rands(o.total_excl, true), vat: rands(vat, true), total_incl: rands(Number(o.total_excl) + vat, true),
+      items: o.items.map(l => `${l.qty} × ${l.code ? `[${l.code}] ` : ''}${l.name}${l.size ? ` (${l.size})` : ''}${l.unit_price === null ? '' : ` @ ${rands(l.unit_price, true)} = ${rands(l.unit_price * l.qty, true)}`}`).join('\n'),
     });
     setCart({}); setNotes(''); setDone(`Order #${o.order_no} placed. Head Office has been notified.`);
     load();
@@ -96,7 +98,7 @@ const FranchiseeOrders: React.FC<{ franchiseeId: string }> = ({ franchiseeId }) 
   return (
     <div className="p-6 md:p-8 max-w-6xl mx-auto">
       <h1 className="text-3xl font-bold text-gray-900">Order from Head Office</h1>
-      <p className="text-gray-600 mt-1">Invoice books, clothing and marketing material. Prices exclude VAT and delivery; Head Office invoices you when the order is prepared.</p>
+      <p className="text-gray-600 mt-1">Stationery, chemicals, consumables and clothing. Prices exclude VAT and delivery; Head Office invoices you when the order is prepared.</p>
       {err && <p className="mt-4 text-red-700">{err}</p>}
       {done && <p className="mt-4 p-3 rounded-lg bg-green-50 text-green-800 text-sm">{done}</p>}
       {loading ? <Spinner /> : (
@@ -112,7 +114,7 @@ const FranchiseeOrders: React.FC<{ franchiseeId: string }> = ({ franchiseeId }) 
                     return (
                       <div key={i.id} className="p-3 flex flex-wrap items-center gap-3">
                         <div className="flex-1 min-w-[200px]">
-                          <div className="font-medium text-gray-900">{i.name}</div>
+                          <div className="font-medium text-gray-900">{i.code && <span className="text-xs font-mono text-gray-400 mr-2">{i.code}</span>}{i.name}</div>
                           <div className="text-xs text-gray-500">{i.price_excl === null ? 'Price on invoice' : `${rands(i.price_excl, true)} per ${i.unit}`}{i.description ? ` · ${i.description}` : ''}</div>
                         </div>
                         {i.sizes.length > 0 && (
@@ -176,7 +178,7 @@ const OrderTable: React.FC<{ orders: Order[]; onCancel?: (o: Order) => void; onO
           <tr key={o.id} className="border-t border-gray-100 align-top">
             <td className="px-4 py-3 whitespace-nowrap"><div className="font-semibold">#{o.order_no}</div><div className="text-xs text-gray-500">{fmt(o.created_at)}</div></td>
             {names && <td className="px-4 py-3">{names(o.franchisee_id)}</td>}
-            <td className="px-4 py-3">{o.items.map((l, i) => <div key={i}>{l.qty} × {l.name}{l.size ? ` (${l.size})` : ''}</div>)}{o.ho_note && <div className="text-xs text-gray-600 mt-1"><b>Head Office:</b> {o.ho_note}</div>}</td>
+            <td className="px-4 py-3">{o.items.map((l, i) => <div key={i}>{l.qty} × {l.code ? `${l.code} ` : ''}{l.name}{l.size ? ` (${l.size})` : ''}</div>)}{o.ho_note && <div className="text-xs text-gray-600 mt-1"><b>Head Office:</b> {o.ho_note}</div>}</td>
             <td className="px-4 py-3 text-right whitespace-nowrap">{rands(o.total_excl, true)}</td>
             <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${ORDER_STATUS[o.status].cls}`}>{ORDER_STATUS[o.status].label}</span></td>
             <td className="px-4 py-3 text-right whitespace-nowrap">
@@ -249,7 +251,7 @@ const UpdateOrder: React.FC<{ order: Order; who: string; onClose: () => void; on
   };
   return (
     <Modal title={`Order #${order.order_no}`} onClose={onClose}>
-      <ul className="text-sm space-y-1 mb-4">{order.items.map((l, i) => <li key={i} className="flex justify-between"><span>{l.qty} × {l.name}{l.size ? ` (${l.size})` : ''}</span><span>{l.unit_price === null ? '—' : rands(l.unit_price * l.qty, true)}</span></li>)}</ul>
+      <ul className="text-sm space-y-1 mb-4">{order.items.map((l, i) => <li key={i} className="flex justify-between"><span>{l.qty} × {l.code ? `${l.code} ` : ''}{l.name}{l.size ? ` (${l.size})` : ''}</span><span>{l.unit_price === null ? '—' : rands(l.unit_price * l.qty, true)}</span></li>)}</ul>
       {order.notes && <p className="text-sm mb-4"><b>Franchisee's notes:</b> {order.notes}</p>}
       <label className="text-xs font-semibold text-gray-600">Status</label>
       <select value={status} onChange={e => setStatus(e.target.value as Order['status'])} className="input mb-3">
@@ -282,6 +284,7 @@ const CatalogueEditor: React.FC = () => {
     for (const [id, p] of Object.entries(dirty)) {
       const patch: any = { ...p };
       if ('sizesText' in p) { patch.sizes = String(p.sizesText || '').split(',').map(s => s.trim()).filter(Boolean); delete patch.sizesText; }
+      if ('code' in p) patch.code = String(p.code || '').trim() || null;
       if ('price_excl' in p) patch.price_excl = (p.price_excl as any) === '' ? null : Number(p.price_excl);
       const { error } = await supabase.from('order_catalogue').update(patch).eq('id', id);
       if (error) { alert(error.message); break; }
@@ -301,13 +304,15 @@ const CatalogueEditor: React.FC = () => {
   if (loading) return <Spinner />;
   return (
     <div className="mt-5">
+      <OrderEmails />
       <p className="text-sm text-gray-600 mb-3">Prices exclude VAT. Leave the price empty to show "Price on invoice". Sizes are separated by commas; leave empty for items without sizes.</p>
       <div className="bg-white border border-gray-200 rounded-xl overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-gray-600 text-xs uppercase"><tr><th className="px-3 py-2 text-left">Category</th><th className="px-3 py-2 text-left">Item</th><th className="px-3 py-2 text-left">Unit</th><th className="px-3 py-2 text-left">Price (R)</th><th className="px-3 py-2 text-left">Sizes</th><th className="px-3 py-2">Active</th><th></th></tr></thead>
+          <thead className="bg-gray-50 text-gray-600 text-xs uppercase"><tr><th className="px-3 py-2 text-left">Code</th><th className="px-3 py-2 text-left">Category</th><th className="px-3 py-2 text-left">Item</th><th className="px-3 py-2 text-left">Unit</th><th className="px-3 py-2 text-left">Price (R)</th><th className="px-3 py-2 text-left">Sizes</th><th className="px-3 py-2">Active</th><th></th></tr></thead>
           <tbody>
             {items.map(i => (
               <tr key={i.id} className="border-t border-gray-100">
+                <td className="px-3 py-1.5"><input className="input w-24 font-mono" value={v(i, 'code')} onChange={e => set(i.id, 'code', e.target.value)} /></td>
                 <td className="px-3 py-1.5"><input className="input w-32" value={v(i, 'category')} onChange={e => set(i.id, 'category', e.target.value)} /></td>
                 <td className="px-3 py-1.5"><input className="input min-w-[220px]" value={v(i, 'name')} onChange={e => set(i.id, 'name', e.target.value)} /></td>
                 <td className="px-3 py-1.5"><input className="input w-20" value={v(i, 'unit')} onChange={e => set(i.id, 'unit', e.target.value)} /></td>
@@ -324,6 +329,35 @@ const CatalogueEditor: React.FC = () => {
         <button onClick={addItem} className="border border-gray-300 px-3 py-2 rounded-lg text-sm font-semibold flex items-center gap-1"><Package className="h-4 w-4" /> Add item</button>
         <button onClick={saveAll} disabled={busy || !Object.keys(dirty).length} className="bg-[#C41E3A] text-white px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50 flex items-center gap-2">{busy && <Loader2 className="h-4 w-4 animate-spin" />} Save changes</button>
       </div>
+    </div>
+  );
+};
+
+/** Who receives the "new order" email (admins always get it too). */
+const OrderEmails: React.FC = () => {
+  const [text, setText] = useState('');
+  const [saved, setSaved] = useState('');
+  const [msg, setMsg] = useState('');
+  useEffect(() => {
+    supabase.from('order_settings').select('notify_emails').eq('id', 1).maybeSingle().then(({ data }) => {
+      const t = ((data as any)?.notify_emails || []).join(', '); setText(t); setSaved(t);
+    });
+  }, []);
+  const save = async () => {
+    const list = text.split(/[,;\s]+/).map(s => s.trim().toLowerCase()).filter(Boolean);
+    const bad = list.find(e => !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e));
+    if (bad) { setMsg(`"${bad}" is not a valid email address.`); return; }
+    const { error } = await supabase.from('order_settings').update({ notify_emails: list }).eq('id', 1);
+    if (error) setMsg(error.message); else { const t = list.join(', '); setText(t); setSaved(t); setMsg('Saved.'); }
+  };
+  return (
+    <div className="mb-5 bg-white border border-gray-200 rounded-xl p-4">
+      <label className="text-xs font-semibold text-gray-600">New orders are emailed to (separate addresses with commas; admins always get a copy)</label>
+      <div className="mt-1 flex gap-2">
+        <input className="input flex-1" value={text} onChange={e => { setText(e.target.value); setMsg(''); }} placeholder="estelle@drainsurgeon.co.za" />
+        <button onClick={save} disabled={text === saved} className="bg-[#C41E3A] text-white px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50">Save</button>
+      </div>
+      {msg && <p className="text-xs mt-1 text-gray-600">{msg}</p>}
     </div>
   );
 };

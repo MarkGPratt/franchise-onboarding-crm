@@ -10,6 +10,7 @@ import NotFound from "./pages/NotFound";
 import ResetPassword from "./pages/ResetPassword";
 import Apply from "./pages/Apply";
 import Sign from "./pages/Sign";
+import Quiz from "./pages/Quiz";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/apply/:token" element={<Apply />} />
             <Route path="/sign/:token" element={<Sign />} />
+            <Route path="/quiz/:token" element={<Quiz />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

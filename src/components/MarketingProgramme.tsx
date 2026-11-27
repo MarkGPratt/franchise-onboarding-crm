@@ -1,3 +1,4 @@
+import { resolveFileUrl } from '@/lib/uploads';
 import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -690,12 +691,15 @@ const SendInfoDialog: React.FC<{
 }> = ({ p, brand, territory, phone, userName, documents, onClose, onDone }) => {
   const [docId, setDocId] = useState(documents.find(d => /profile/i.test(d.name))?.id || '');
   const doc = documents.find(d => d.id === docId);
-  const tpl = infoTemplate(p.segment, { contact: (p.contact_name || '').split(' ')[0], brand, territory, sender: userName, phone, link: doc?.url });
+  // Prospects open the document outside the portal, so the link is a signed one valid for 30 days.
+  const [docLink, setDocLink] = useState<string | undefined>(doc?.url);
+  useEffect(() => { let on = true; (async () => { const u = doc?.url ? await resolveFileUrl(doc.url, 30 * 24 * 3600) : undefined; if (on) setDocLink(u); })(); return () => { on = false; }; }, [docId]);
+  const tpl = infoTemplate(p.segment, { contact: (p.contact_name || '').split(' ')[0], brand, territory, sender: userName, phone, link: docLink });
   const [subject, setSubject] = useState(tpl.subject);
   const [body, setBody] = useState(tpl.body);
   const [followUp, setFollowUp] = useState(addDays(todayYmd(), 5));
   const [busy, setBusy] = useState(false);
-  useEffect(() => { setBody(tpl.body); }, [docId]);
+  useEffect(() => { setBody(tpl.body); }, [docId, docLink]);
 
   const record = async (via: 'email' | 'whatsapp' | 'manual') => {
     setBusy(true);

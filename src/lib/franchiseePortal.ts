@@ -46,6 +46,7 @@ export interface HistoryRow {
 
 export interface CatalogueItem {
   id: string;
+  code: string | null;
   category: string;
   name: string;
   description: string | null;
@@ -57,7 +58,7 @@ export interface CatalogueItem {
   position: number;
 }
 
-export interface OrderLine { item_id: string; name: string; unit: string; size: string | null; qty: number; unit_price: number | null }
+export interface OrderLine { item_id: string; code?: string | null; name: string; unit: string; size: string | null; qty: number; unit_price: number | null }
 export interface Order {
   id: string;
   order_no: number;
@@ -127,6 +128,29 @@ export async function notifyStaff(event_type: string, variables: Record<string, 
     supabase.functions.invoke('send-notification', {
       body: { event_type, recipient_email: p.email, recipient_user_id: p.id, recipient_name: p.name,
         variables: { recipient_name: (p.name || '').split(' ')[0] || 'there', app_url, ...variables } },
+    }).catch(() => {});
+  }
+}
+
+/** Order emails: the addresses set on Orders > Catalogue & prices (Estelle by default) plus all admins. */
+export async function notifyOrder(variables: Record<string, string>) {
+  const app_url = window.location.origin;
+  const [s, a] = await Promise.all([
+    supabase.from('order_settings').select('notify_emails').eq('id', 1).maybeSingle(),
+    supabase.from('profiles').select('id,email,name,role').eq('role', 'admin'),
+  ]);
+  const list: { email: string; id?: string; name?: string }[] = [
+    ...(((s.data as any)?.notify_emails || []) as string[]).map(email => ({ email })),
+    ...((a.data || []) as { id: string; email: string; name: string }[]).map(p => ({ email: p.email, id: p.id, name: p.name })),
+  ];
+  const sent = new Set<string>();
+  for (const r of list) {
+    const email = (r.email || '').trim().toLowerCase();
+    if (!email || sent.has(email)) continue;
+    sent.add(email);
+    supabase.functions.invoke('send-notification', {
+      body: { event_type: 'order_submitted', recipient_email: email, recipient_user_id: r.id, recipient_name: r.name,
+        variables: { recipient_name: (r.name || '').split(' ')[0] || 'there', app_url, ...variables } },
     }).catch(() => {});
   }
 }

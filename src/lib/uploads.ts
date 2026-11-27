@@ -96,7 +96,24 @@ export async function deleteFile(path: string): Promise<void> {
  * Trigger a real download by fetching the URL as a blob.
  * Falls back to opening in a new tab if the fetch fails (e.g. CORS).
  */
+const PUBLIC_MARK = `/storage/v1/object/public/${BUCKET}/`;
+
+/**
+ * Turn a stored file link into one that works when the bucket is private:
+ * links saved in the old public format get a short-lived signed link instead.
+ * Other links are returned unchanged.
+ */
+export async function resolveFileUrl(url: string, expiresInSeconds = 600): Promise<string> {
+  if (!url) return url;
+  const i = url.indexOf(PUBLIC_MARK);
+  if (i < 0) return url;
+  const path = decodeURIComponent(url.slice(i + PUBLIC_MARK.length).split('?')[0]);
+  const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(path, expiresInSeconds);
+  return error || !data?.signedUrl ? url : data.signedUrl;
+}
+
 export async function downloadFile(url: string, fileName: string): Promise<void> {
+  url = await resolveFileUrl(url);
   try {
     const res = await fetch(url);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
