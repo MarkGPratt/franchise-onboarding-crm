@@ -270,7 +270,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // ----- Checklist (DB-backed, realtime) -----
   // Loads sections + tasks + attachments from the database. On first run with
-  // an empty database, seeds the DEFAULT_CHECKLIST so the app is usable.
+  // (The old default-checklist seeding is disabled - see refreshChecklist.)
   const refreshChecklist = async () => {
     const [secRes, taskRes, attRes, subRes] = await Promise.all([
       supabase.from('checklist_sections').select('*').order('position', { ascending: true }),
@@ -290,11 +290,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const atts = attRes.data || [];
     const subs = subRes.data || [];
 
-    // Seed if empty
-    if (sections.length === 0) {
-      await seedDefaultChecklist();
-      return refreshChecklist();
-    }
+    // Never seed from the browser. With login-only access an empty result means
+    // "not signed in yet", not an empty database (seeding here created 7 duplicate
+    // default sections on 27 Nov 2026). Keep what is on screen and wait for login.
+    if (sections.length === 0) return;
 
     const attsByTask: Record<string, TaskAttachment[]> = {};
     atts.forEach((a: any) => {
