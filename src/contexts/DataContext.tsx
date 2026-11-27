@@ -385,7 +385,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refreshAreas();
     refreshChecklist();
 
-    (async () => {
+    // Documents, uploads, ticks and comments. Loaded on open AND again after login:
+    // since the access rules (24 Nov) a logged-out load returns nothing.
+    const loadDocsAndProgress = async () => {
       setDocumentsLoading(true);
       const { data: docs, error: docErr } = await supabase
         .from('documents').select('*').order('uploaded_at', { ascending: false });
@@ -444,7 +446,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
         return next;
       });
-    })();
+    };
+    loadDocsAndProgress();
+
+    // Reload everything once the user is signed in (or the saved session is restored).
+    const { data: authSub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+        refreshLeads(); refreshFranchisees(); refreshDivisions(); refreshAreas();
+        refreshChecklist(); refreshStageDocuments(); loadDocsAndProgress();
+      }
+    });
 
 
 
@@ -481,6 +492,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       window.clearInterval(pollId);
       window.removeEventListener('focus', onFocus);
+      authSub.subscription.unsubscribe();
     };
   }, []);
 
